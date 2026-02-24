@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EDT – Sistema Integral Digital | Club Virgen del Rosario</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: #f5f6fa;
+  font-family: 'Inter', sans-serif;
+  color: #1a1a2e;
+}
+
+/* ── HEADER ── */
+.page-header {
+  background: #1a3a5c;
+  color: white;
+  padding: 18px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
+}
+.header-left h1 {
+  font-size: 15px; font-weight: 700; letter-spacing: .3px;
+}
+.header-left p {
+  font-size: 11px; opacity: .75; margin-top: 3px;
+}
+.header-right {
+  display: flex; gap: 20px; flex-wrap: wrap;
+}
+.hstat { text-align: center; }
+.hstat-n { font-size: 18px; font-weight: 700; color: #f0c040; }
+.hstat-l { font-size: 10px; opacity: .7; }
+
+/* ── CONTROLS ── */
+.controls {
+  background: white;
+  border-bottom: 1px solid #e0e4ec;
+  padding: 10px 32px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.controls span { font-size: 12px; color: #666; }
+.btn {
+  background: white; border: 1px solid #d0d5dd;
+  color: #444; font-family: 'Inter', sans-serif;
+  font-size: 11px; font-weight: 500;
+  padding: 5px 12px; border-radius: 5px;
+  cursor: pointer; transition: all .15s;
+}
+.btn:hover { background: #f0f4ff; border-color: #1a3a5c; color: #1a3a5c; }
+.btn.active { background: #1a3a5c; color: white; border-color: #1a3a5c; }
+
+/* ── LEGEND ── */
+.legend {
+  display: flex; gap: 16px; margin-left: auto; flex-wrap: wrap; align-items: center;
+}
+.leg { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #555; }
+.leg-box { width: 14px; height: 14px; border-radius: 3px; }
+
+/* ── CANVAS ── */
+.canvas-wrap {
+  overflow: auto;
+  padding: 24px 16px 48px;
+  background: #f5f6fa;
+  min-height: calc(100vh - 120px);
+}
+.canvas {
+  display: inline-block;
+  min-width: max-content;
+}
+
+/* ── TREE LAYOUT ── */
+.tree-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0;
+}
+.tree-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── NODE BOX ── */
+.node {
+  border-radius: 5px;
+  padding: 7px 10px;
+  text-align: center;
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1.35;
+  min-width: 110px;
+  max-width: 130px;
+  position: relative;
+  cursor: pointer;
+  transition: filter .15s, transform .15s;
+  border: 1.5px solid transparent;
+  user-select: none;
+}
+.node:hover { filter: brightness(.92); transform: translateY(-1px); }
+.node .nid {
+  display: block;
+  font-size: 9px; font-weight: 700;
+  letter-spacing: .4px;
+  margin-bottom: 2px;
+  opacity: .75;
+}
+
+/* Level colours */
+.lvl0 { background: #1a3a5c; color: white; font-size: 12px; font-weight: 700; min-width: 160px; max-width: 180px; border-radius: 7px; cursor: default; }
+.lvl0:hover { filter:none; transform:none; }
+
+.lvl1-0 { background: #2563a8; color: white; border-color: #1e4f8c; } /* Gestión */
+.lvl1-1 { background: #7b3fa0; color: white; border-color: #6230850; } /* Sistema */
+.lvl1-2 { background: #1e7a45; color: white; border-color: #155e36; } /* Calidad */
+.lvl1-3 { background: #c2590f; color: white; border-color: #9e4509; } /* Implementación */
+.lvl1-4 { background: #a0265a; color: white; border-color: #7e1c47; } /* Capacitación */
+.lvl1-5 { background: #1a7070; color: white; border-color: #145757; } /* Post-impl */
+
+.lvl2 { background: #dce8f8; color: #1a3a5c; border-color: #9ab8de; font-size: 10px; min-width: 105px; max-width: 125px; }
+.lvl3 { background: #eef4fd; color: #2c4a6e; border-color: #b8cfe8; font-size: 9.5px; min-width: 100px; max-width: 120px; }
+.lvl4 { background: #f7faff; color: #445566; border-color: #cddaeb; font-size: 9px; font-weight: 400; min-width: 95px; max-width: 115px; }
+
+/* tint lvl2/3/4 per branch */
+.b0 .lvl2 { background:#dce8f8; border-color:#9ab8de; }
+.b0 .lvl3 { background:#eef4fd; border-color:#b8cfe8; }
+.b0 .lvl4 { background:#f7faff; border-color:#cddaeb; }
+
+.b1 .lvl2 { background:#ecdff5; border-color:#c9a8e0; }
+.b1 .lvl3 { background:#f5eefb; border-color:#d9c4ec; }
+.b1 .lvl4 { background:#faf6fe; border-color:#e5d8f5; }
+
+.b2 .lvl2 { background:#d7f0e3; border-color:#8ecfaa; }
+.b2 .lvl3 { background:#ebf7f1; border-color:#aadcc0; }
+.b2 .lvl4 { background:#f4fbf7; border-color:#c5ebd5; }
+
+.b3 .lvl2 { background:#fde8d8; border-color:#f0b48a; }
+.b3 .lvl3 { background:#fef3eb; border-color:#f5caa8; }
+.b3 .lvl4 { background:#fff8f4; border-color:#f8dcc4; }
+
+.b4 .lvl2 { background:#f8dcea; border-color:#e8a0c0; }
+.b4 .lvl3 { background:#fceef6; border-color:#f0bcd6; }
+.b4 .lvl4 { background:#fef6fb; border-color:#f5d4e6; }
+
+.b5 .lvl2 { background:#d8f0f0; border-color:#88cccc; }
+.b5 .lvl3 { background:#ebf8f8; border-color:#a8dcdc; }
+.b5 .lvl4 { background:#f4fbfb; border-color:#c4e8e8; }
+
+/* ── CONNECTORS ── */
+.v-line   { width:1px; background:#aab8cc; }
+.h-line   { height:1px; background:#aab8cc; }
+
+.connector-down  { width:1px; height:16px; background:#aab8cc; flex-shrink:0; }
+.connector-up    { width:1px; height:16px; background:#aab8cc; flex-shrink:0; }
+
+/* horizontal bar connecting siblings */
+.h-bar-row {
+  display:flex; align-items:stretch;
+  width:100%;
+}
+
+/* child group */
+.child-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.child-group.hidden { display: none; }
+
+/* siblings row */
+.siblings {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+}
+.sibling-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* count badge */
+.cnt {
+  position: absolute; top: -7px; right: -7px;
+  background: #1a3a5c; color: white;
+  font-size: 8px; font-weight: 700;
+  width: 15px; height: 15px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* print */
+@media print {
+  .controls, .page-header .btn { display: none; }
+  .canvas-wrap { overflow: visible; }
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="header-left">
+    <h1>EDT — Modernización Administrativa · Club Virgen del Rosario</h1>
+    <p>UNMSM · Gestión de Proyectos TI · Grupo 2</p>
+  </div>
+  <div class="header-right">
+    <div class="hstat"><div class="hstat-n">6</div><div class="hstat-l">Fases</div></div>
+    <div class="hstat"><div class="hstat-n">22</div><div class="hstat-l">Paquetes</div></div>
+    <div class="hstat"><div class="hstat-n">68</div><div class="hstat-l">Entregables</div></div>
+    <div class="hstat"><div class="hstat-n">S/.94,100</div><div class="hstat-l">Presupuesto</div></div>
+  </div>
+</div>
+
+<div class="controls">
+  <span>Niveles:</span>
+  <button class="btn" onclick="showLevel(1)">Nivel 1</button>
+  <button class="btn" onclick="showLevel(2)">Nivel 2</button>
+  <button class="btn" onclick="showLevel(3)">Nivel 3</button>
+  <button class="btn active" onclick="showLevel(4)">Nivel 4</button>
+  <div class="legend">
+    <div class="leg"><div class="leg-box" style="background:#2563a8"></div>1. Gestión</div>
+    <div class="leg"><div class="leg-box" style="background:#7b3fa0"></div>2. Sistema (SID)</div>
+    <div class="leg"><div class="leg-box" style="background:#1e7a45"></div>3. Calidad</div>
+    <div class="leg"><div class="leg-box" style="background:#c2590f"></div>4. Implementación</div>
+    <div class="leg"><div class="leg-box" style="background:#a0265a"></div>5. Capacitación</div>
+    <div class="leg"><div class="leg-box" style="background:#1a7070"></div>6. Post-Impl.</div>
+  </div>
+</div>
+
+<div class="canvas-wrap">
+  <div class="canvas" id="root"></div>
+</div>
+
+<script>
+// DATA
+const EDT = {
+  id:"0.0", label:"Sistema Integral Digital\nClub Virgen del Rosario", lv:0,
+  ch:[
+    { id:"1.0", label:"1. Gestión del Proyecto", lv:1, cls:"lvl1-0", bi:0, ch:[
+      { id:"1.1", label:"Inicio del Proyecto", lv:2, ch:[
+        { id:"1.1.1", label:"Acta de Constitución", lv:3, ch:[
+          { id:"1.1.1.1", label:"Redacción del acta", lv:4 },
+          { id:"1.1.1.2", label:"Revisión con patrocinador", lv:4 },
+          { id:"1.1.1.3", label:"Firma y aprobación", lv:4 },
+        ]},
+        { id:"1.1.2", label:"Registro de Interesados", lv:3, ch:[
+          { id:"1.1.2.1", label:"Identificación de stakeholders", lv:4 },
+          { id:"1.1.2.2", label:"Análisis influencia/interés", lv:4 },
+          { id:"1.1.2.3", label:"Estrategia de comunicación", lv:4 },
+        ]},
+      ]},
+      { id:"1.2", label:"Planificación", lv:2, ch:[
+        { id:"1.2.1", label:"Plan de Alcance", lv:3, ch:[
+          { id:"1.2.1.1", label:"Enunciado del alcance", lv:4 },
+          { id:"1.2.1.2", label:"EDT aprobada", lv:4 },
+          { id:"1.2.1.3", label:"Diccionario de la EDT", lv:4 },
+        ]},
+        { id:"1.2.2", label:"Plan de Cronograma", lv:3, ch:[
+          { id:"1.2.2.1", label:"Lista de actividades e hitos", lv:4 },
+          { id:"1.2.2.2", label:"Estimación de duración", lv:4 },
+          { id:"1.2.2.3", label:"Cronograma aprobado (Gantt)", lv:4 },
+        ]},
+        { id:"1.2.3", label:"Plan de Costos", lv:3, ch:[
+          { id:"1.2.3.1", label:"Estimación presupuestal", lv:4 },
+          { id:"1.2.3.2", label:"Línea base de costos", lv:4 },
+        ]},
+        { id:"1.2.4", label:"Plan de Riesgos", lv:3, ch:[
+          { id:"1.2.4.1", label:"Identificación de riesgos", lv:4 },
+          { id:"1.2.4.2", label:"Análisis cualitativo", lv:4 },
+          { id:"1.2.4.3", label:"Plan de respuesta", lv:4 },
+        ]},
+        { id:"1.2.5", label:"Plan de Comunicaciones", lv:3, ch:[
+          { id:"1.2.5.1", label:"Canales y frecuencia", lv:4 },
+          { id:"1.2.5.2", label:"Informes de avance semanales", lv:4 },
+        ]},
+      ]},
+      { id:"1.3", label:"Seguimiento y Control", lv:2, ch:[
+        { id:"1.3.1", label:"Control de Avance", lv:3, ch:[
+          { id:"1.3.1.1", label:"Informes de desempeño sprint", lv:4 },
+          { id:"1.3.1.2", label:"Control de cambios", lv:4 },
+        ]},
+        { id:"1.3.2", label:"Control Financiero", lv:3, ch:[
+          { id:"1.3.2.1", label:"Seguimiento gasto vs presupuesto", lv:4 },
+          { id:"1.3.2.2", label:"Reporte de variaciones", lv:4 },
+        ]},
+      ]},
+      { id:"1.4", label:"Cierre del Proyecto", lv:2, ch:[
+        { id:"1.4.1", label:"Acta de Cierre", lv:3, ch:[
+          { id:"1.4.1.1", label:"Revisión entregables vs alcance", lv:4 },
+          { id:"1.4.1.2", label:"Firma de aceptación del cliente", lv:4 },
+        ]},
+        { id:"1.4.2", label:"Lecciones Aprendidas", lv:3, ch:[
+          { id:"1.4.2.1", label:"Taller de retrospectiva final", lv:4 },
+          { id:"1.4.2.2", label:"Documento de lecciones", lv:4 },
+        ]},
+      ]},
+    ]},
+
+    { id:"2.0", label:"2. Sistema Integral Digital (SID)", lv:1, cls:"lvl1-1", bi:1, ch:[
+      { id:"2.1", label:"Sprint 1: Infraestructura y Seguridad", lv:2, ch:[
+        { id:"2.1.1", label:"Entorno Cloud Configurado", lv:3, ch:[
+          { id:"2.1.1.1", label:"Proyecto en Supabase creado", lv:4 },
+          { id:"2.1.1.2", label:"Dominio y hosting activos", lv:4 },
+          { id:"2.1.1.3", label:"Variables de entorno configuradas", lv:4 },
+        ]},
+        { id:"2.1.2", label:"Base de Datos Operativa", lv:3, ch:[
+          { id:"2.1.2.1", label:"Modelo de datos diseñado", lv:4 },
+          { id:"2.1.2.2", label:"Tablas y relaciones creadas", lv:4 },
+          { id:"2.1.2.3", label:"Política de respaldo diario activa", lv:4 },
+        ]},
+        { id:"2.1.3", label:"Autenticación y Roles", lv:3, ch:[
+          { id:"2.1.3.1", label:"Pantalla de inicio de sesión", lv:4 },
+          { id:"2.1.3.2", label:"Roles Admin/Entrenador/Padre", lv:4 },
+          { id:"2.1.3.3", label:"Recuperación de contraseña", lv:4 },
+          { id:"2.1.3.4", label:"Control de sesiones activas", lv:4 },
+        ]},
+      ]},
+      { id:"2.2", label:"Sprint 2: Inscripción de Alumnas", lv:2, ch:[
+        { id:"2.2.1", label:"Formulario de Registro Digital", lv:3, ch:[
+          { id:"2.2.1.1", label:"Datos personales y DNI", lv:4 },
+          { id:"2.2.1.2", label:"Carga de foto de perfil", lv:4 },
+          { id:"2.2.1.3", label:"Datos de contacto del padre/madre", lv:4 },
+        ]},
+        { id:"2.2.2", label:"Perfil Antropométrico", lv:3, ch:[
+          { id:"2.2.2.1", label:"Registro de peso y talla", lv:4 },
+          { id:"2.2.2.2", label:"Historial de medidas con fecha", lv:4 },
+          { id:"2.2.2.3", label:"Visualización de evolución física", lv:4 },
+        ]},
+        { id:"2.2.3", label:"Validación Administrativa", lv:3, ch:[
+          { id:"2.2.3.1", label:"Revisión de ficha por admin", lv:4 },
+          { id:"2.2.3.2", label:"Aprobación/rechazo con observación", lv:4 },
+          { id:"2.2.3.3", label:"Notificación al padre de familia", lv:4 },
+        ]},
+        { id:"2.2.4", label:"Módulo Entrenador", lv:3, ch:[
+          { id:"2.2.4.1", label:"Listado de alumnas por grupo", lv:4 },
+          { id:"2.2.4.2", label:"Evaluación de nivel deportivo", lv:4 },
+          { id:"2.2.4.3", label:"Asignación de grupo/horario", lv:4 },
+        ]},
+      ]},
+      { id:"2.3", label:"Sprint 3: Módulo Financiero", lv:2, ch:[
+        { id:"2.3.1", label:"Pasarela de Pagos", lv:3, ch:[
+          { id:"2.3.1.1", label:"Integración API Mercado Pago", lv:4 },
+          { id:"2.3.1.2", label:"Flujo de pago portal del padre", lv:4 },
+          { id:"2.3.1.3", label:"Comprobante automático por correo", lv:4 },
+        ]},
+        { id:"2.3.2", label:"Control de Morosidad", lv:3, ch:[
+          { id:"2.3.2.1", label:"Estado de cuenta por alumna", lv:4 },
+          { id:"2.3.2.2", label:"Semáforo de pagos (al día/pendiente/moroso)", lv:4 },
+          { id:"2.3.2.3", label:"Alerta automática de vencimiento", lv:4 },
+        ]},
+        { id:"2.3.3", label:"Reportes Financieros", lv:3, ch:[
+          { id:"2.3.3.1", label:"Reporte de ingresos mensuales", lv:4 },
+          { id:"2.3.3.2", label:"Reporte de deudas pendientes", lv:4 },
+          { id:"2.3.3.3", label:"Exportación a PDF / Excel", lv:4 },
+        ]},
+      ]},
+      { id:"2.4", label:"Sprint 4: Carnés y Reportes", lv:2, ch:[
+        { id:"2.4.1", label:"Carné Digital", lv:3, ch:[
+          { id:"2.4.1.1", label:"Diseño de plantilla de carné", lv:4 },
+          { id:"2.4.1.2", label:"Generación automática en PDF", lv:4 },
+          { id:"2.4.1.3", label:"Código QR único por alumna", lv:4 },
+          { id:"2.4.1.4", label:"Descarga desde portal del padre", lv:4 },
+        ]},
+        { id:"2.4.2", label:"Control de Asistencia", lv:3, ch:[
+          { id:"2.4.2.1", label:"Registro de asistencia por sesión", lv:4 },
+          { id:"2.4.2.2", label:"Escáner de código QR en entrada", lv:4 },
+          { id:"2.4.2.3", label:"Reporte de asistencia mensual", lv:4 },
+        ]},
+        { id:"2.4.3", label:"Reportes Administrativos", lv:3, ch:[
+          { id:"2.4.3.1", label:"Listado alumnas activas", lv:4 },
+          { id:"2.4.3.2", label:"Estadísticas inscripción/deserción", lv:4 },
+          { id:"2.4.3.3", label:"Dashboard de indicadores clave", lv:4 },
+        ]},
+      ]},
+    ]},
+
+    { id:"3.0", label:"3. Aseguramiento de Calidad", lv:1, cls:"lvl1-2", bi:2, ch:[
+      { id:"3.1", label:"Pruebas de Módulos", lv:2, ch:[
+        { id:"3.1.1", label:"Pruebas Unitarias", lv:3, ch:[
+          { id:"3.1.1.1", label:"Validación de formularios", lv:4 },
+          { id:"3.1.1.2", label:"Lógica de cálculo de morosidad", lv:4 },
+          { id:"3.1.1.3", label:"Generación de QR y PDF", lv:4 },
+        ]},
+        { id:"3.1.2", label:"Pruebas de Integración", lv:3, ch:[
+          { id:"3.1.2.1", label:"Flujo inscripción → pago completo", lv:4 },
+          { id:"3.1.2.2", label:"Sincronización BD ↔ interfaz", lv:4 },
+          { id:"3.1.2.3", label:"Integración de correo automático", lv:4 },
+        ]},
+      ]},
+      { id:"3.2", label:"Seguridad y Cumplimiento", lv:2, ch:[
+        { id:"3.2.1", label:"Pruebas de Seguridad", lv:3, ch:[
+          { id:"3.2.1.1", label:"Prueba de roles y permisos", lv:4 },
+          { id:"3.2.1.2", label:"Cumplimiento Ley N°29733", lv:4 },
+          { id:"3.2.1.3", label:"Prueba de acceso no autorizado", lv:4 },
+        ]},
+      ]},
+      { id:"3.3", label:"Aceptación Usuario (UAT)", lv:2, ch:[
+        { id:"3.3.1", label:"Pruebas con Usuario Real", lv:3, ch:[
+          { id:"3.3.1.1", label:"UAT con personal administrativo", lv:4 },
+          { id:"3.3.1.2", label:"UAT con entrenadores", lv:4 },
+          { id:"3.3.1.3", label:"UAT con padres de familia", lv:4 },
+          { id:"3.3.1.4", label:"Registro y resolución de observaciones", lv:4 },
+        ]},
+      ]},
+    ]},
+
+    { id:"4.0", label:"4. Implementación en Producción", lv:1, cls:"lvl1-3", bi:3, ch:[
+      { id:"4.1", label:"Despliegue del Sistema", lv:2, ch:[
+        { id:"4.1.1", label:"Marcha Blanca (2 semanas)", lv:3, ch:[
+          { id:"4.1.1.1", label:"Operación paralela manual+digital", lv:4 },
+          { id:"4.1.1.2", label:"Monitoreo de errores en producción", lv:4 },
+          { id:"4.1.1.3", label:"Corrección de incidencias críticas", lv:4 },
+        ]},
+      ]},
+      { id:"4.2", label:"Migración de Datos Históricos", lv:2, ch:[
+        { id:"4.2.1", label:"Importación de Registros Existentes", lv:3, ch:[
+          { id:"4.2.1.1", label:"Digitalización de fichas físicas", lv:4 },
+          { id:"4.2.1.2", label:"Carga masiva a base de datos", lv:4 },
+          { id:"4.2.1.3", label:"Validación de datos migrados", lv:4 },
+        ]},
+      ]},
+    ]},
+
+    { id:"5.0", label:"5. Capacitación y Documentación", lv:1, cls:"lvl1-4", bi:4, ch:[
+      { id:"5.1", label:"Capacitación al Personal", lv:2, ch:[
+        { id:"5.1.1", label:"Capacitación Administrativa", lv:3, ch:[
+          { id:"5.1.1.1", label:"Taller inscripciones y perfiles", lv:4 },
+          { id:"5.1.1.2", label:"Taller control financiero y morosidad", lv:4 },
+          { id:"5.1.1.3", label:"Taller carnés y reportes", lv:4 },
+        ]},
+        { id:"5.1.2", label:"Capacitación Entrenadores", lv:3, ch:[
+          { id:"5.1.2.1", label:"Uso módulo evaluaciones", lv:4 },
+          { id:"5.1.2.2", label:"Registro asistencia con QR", lv:4 },
+        ]},
+        { id:"5.1.3", label:"Guía para Padres de Familia", lv:3, ch:[
+          { id:"5.1.3.1", label:"Instructivo de pago en línea", lv:4 },
+          { id:"5.1.3.2", label:"Descarga de carné digital", lv:4 },
+        ]},
+      ]},
+      { id:"5.2", label:"Documentación Entregada", lv:2, ch:[
+        { id:"5.2.1", label:"Manual de Usuario Final", lv:3, ch:[
+          { id:"5.2.1.1", label:"Manual administrativo", lv:4 },
+          { id:"5.2.1.2", label:"Manual del entrenador", lv:4 },
+          { id:"5.2.1.3", label:"Guía rápida para padres", lv:4 },
+        ]},
+        { id:"5.2.2", label:"Manual Técnico del Sistema", lv:3, ch:[
+          { id:"5.2.2.1", label:"Arquitectura y modelo de datos", lv:4 },
+          { id:"5.2.2.2", label:"Guía de despliegue y variables", lv:4 },
+        ]},
+      ]},
+    ]},
+
+    { id:"6.0", label:"6. Post-Implementación", lv:1, cls:"lvl1-5", bi:5, ch:[
+      { id:"6.1", label:"Soporte y Ajustes", lv:2, ch:[
+        { id:"6.1.1", label:"Soporte Inicial (3 meses)", lv:3, ch:[
+          { id:"6.1.1.1", label:"Canal soporte correo/WhatsApp", lv:4 },
+          { id:"6.1.1.2", label:"Resolución de incidencias menores", lv:4 },
+          { id:"6.1.1.3", label:"Actualizaciones correctivas", lv:4 },
+        ]},
+      ]},
+      { id:"6.2", label:"Evaluación de Resultados", lv:2, ch:[
+        { id:"6.2.1", label:"Medición de Beneficios Reales", lv:3, ch:[
+          { id:"6.2.1.1", label:"KPI: tiempo de inscripción", lv:4 },
+          { id:"6.2.1.2", label:"% mensualidades cobradas digitalmente", lv:4 },
+          { id:"6.2.1.3", label:"Cálculo ROI real vs proyectado", lv:4 },
+          { id:"6.2.1.4", label:"Informe ex-post a 3 meses", lv:4 },
+        ]},
+      ]},
+    ]},
+  ]
+};
+
+// RENDERER
+let maxLevel = 4;
+
+function renderNode(node, branchIdx) {
+  const bi = branchIdx !== undefined ? branchIdx : (node.bi !== undefined ? node.bi : 0);
+
+  const col = document.createElement('div');
+  col.className = `tree-col b${bi}`;
+  col.dataset.id = node.id;
+  col.dataset.lv = node.lv;
+
+  // box
+  const box = document.createElement('div');
+  const lvClass = node.lv === 1 ? node.cls : `lvl${node.lv}`;
+  box.className = `node ${lvClass}`;
+  box.dataset.lv = node.lv;
+
+  if (node.lv > 0) {
+    const idEl = document.createElement('span');
+    idEl.className = 'nid';
+    idEl.textContent = node.id;
+    box.appendChild(idEl);
+  }
+
+  const lbl = document.createElement('span');
+  lbl.textContent = node.label;
+  box.appendChild(lbl);
+
+  if (node.ch && node.ch.length && node.lv > 0) {
+    const cnt = document.createElement('div');
+    cnt.className = 'cnt';
+    cnt.textContent = node.ch.length;
+    box.appendChild(cnt);
+    box.onclick = (e) => {
+      e.stopPropagation();
+      const cg = col.querySelector(':scope > .child-group');
+      if (cg) {
+        cg.classList.toggle('hidden');
+        box.style.opacity = cg.classList.contains('hidden') ? '.65' : '1';
+      }
+    };
+    box.style.cursor = 'pointer';
+  }
+
+  col.appendChild(box);
+
+  if (node.ch && node.ch.length) {
+    // down line from box
+    const vd = document.createElement('div');
+    vd.className = 'connector-down';
+    vd.dataset.connector = '1';
+    col.appendChild(vd);
+
+    const cg = document.createElement('div');
+    cg.className = 'child-group';
+    cg.dataset.parentLv = node.lv;
+
+    if (node.lv + 1 > maxLevel) cg.classList.add('hidden');
+
+    const siblings = document.createElement('div');
+    siblings.className = 'siblings';
+
+    node.ch.forEach((child, ci) => {
+      const sBranch = document.createElement('div');
+      sBranch.style.cssText = 'display:flex;flex-direction:column;align-items:center;';
+
+      const hWrap = document.createElement('div');
+      hWrap.style.cssText = 'display:flex;align-items:center;width:100%;';
+
+      const leftH  = document.createElement('div');
+      leftH.className = 'h-line';
+      leftH.style.cssText = `flex:1; min-width:${ci===0?'0':'20'}px; ${ci===0?'visibility:hidden;':''}`;
+
+      const rightH = document.createElement('div');
+      rightH.className = 'h-line';
+      rightH.style.cssText = `flex:1; min-width:${ci===node.ch.length-1?'0':'20'}px; ${ci===node.ch.length-1?'visibility:hidden;':''}`;
+
+      const vUp = document.createElement('div');
+      vUp.className = 'connector-up';
+      vUp.dataset.connector = '1';
+
+      hWrap.appendChild(leftH);
+      hWrap.appendChild(vUp);
+      hWrap.appendChild(rightH);
+
+      sBranch.appendChild(hWrap);
+      sBranch.appendChild(renderNode(child, bi));
+      siblings.appendChild(sBranch);
+    });
+
+    cg.appendChild(siblings);
+    col.appendChild(cg);
+  }
+
+  return col;
+}
+
+function buildTree() {
+  const root = document.getElementById('root');
+  root.innerHTML = '';
+  root.appendChild(renderNode(EDT, 0));
+}
+
+function showLevel(lv) {
+  maxLevel = lv;
+  buildTree();
+  document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+buildTree();
+</script>
+</body>
+</html>
